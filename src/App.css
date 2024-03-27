@@ -1,0 +1,20 @@
+#diagram {
+  width: 100vw;
+  height: 100vh;
+
+  background: no-repeat center url("./assets/map.jpg");
+  background-size: cover;
+}
+
+#map {
+  width: 20vw;
+  height: 15vh;
+
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 10;
+
+
+  background: url('https://i.stack.imgur.com/My9x5.jpg') center;
+}
