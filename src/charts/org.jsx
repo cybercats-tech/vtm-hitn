@@ -101,8 +101,8 @@ export function init(data) {
       ),
       $(go.TextBlock,
         {
-          position: new go.Point(0, 60), 
-          font: "Bold 24pt Cormorant Garamond", width: 320, textAlign: 'center' 
+          position: new go.Point(0, 60),
+          font: "Bold 24pt Cormorant Garamond", width: 320, textAlign: 'center'
         },
         new go.Binding("text", "name")
       ),
@@ -116,8 +116,8 @@ export function init(data) {
       ),
       $(go.TextBlock,
         {
-          position: new go.Point(0, 320), 
-          font: "Bold 18pt Cormorant Garamond", width: 320, textAlign: 'center' 
+          position: new go.Point(0, 320),
+          font: "Bold 18pt Cormorant Garamond", width: 320, textAlign: 'center'
         },
         new go.Binding("text", "status")
       ),
@@ -140,8 +140,8 @@ export function init(data) {
       ),
       $(go.TextBlock,
         {
-          position: new go.Point(0, 60), 
-          font: "Bold 24pt Cormorant Garamond", width: 320, textAlign: 'center' 
+          position: new go.Point(0, 60),
+          font: "Bold 24pt Cormorant Garamond", width: 320, textAlign: 'center'
         },
         new go.Binding("text", "name")
       ),
@@ -149,11 +149,11 @@ export function init(data) {
         {
           position: new go.Point(55, 110),
           width: 220, height: 200,
-          click: function(e, obj) {
+          click: function (e, obj) {
             console.log(obj.part.data);
             const link = obj.part.data.telegram
 
-            if(link && window.open) window.open(link, '_blank')
+            if (link && window.open) window.open(link, '_blank')
           }
         },
         new go.Binding("source", "portrait"),
@@ -161,18 +161,23 @@ export function init(data) {
       ),
       $(go.TextBlock,
         {
-          position: new go.Point(0, 320), 
-          font: "Bold 18pt Cormorant Garamond", width: 320, textAlign: 'center' 
+          position: new go.Point(0, 320),
+          font: "Bold 18pt Cormorant Garamond", width: 320, textAlign: 'center'
         },
         new go.Binding("text", "status")
       )
     ),
   );
 
-  const organizationNodeTemplate = $(go.Node, "Auto",
+  const organizationNodeTemplate = $(go.Node, "Vertical",
     $(go.Picture,
-      { margin: 5, width: 320, height: 180 },
-      new go.Binding("source", "image"))
+      { width: 320, height: 180 },
+      new go.Binding("source", "image")
+    ),
+    $(go.TextBlock,         // group title
+      { font: "Bold 18pt Cormorant Garamond", textAlign: 'center', background: 'white' },
+      new go.Binding("text", "name")
+    ),
   );
 
   // define the Link template, a simple orthogonal line
@@ -182,23 +187,6 @@ export function init(data) {
     { corner: 5, selectable: false },
     $(go.Shape, { strokeWidth: 3, stroke: "#424242" })
   ); // dark gray, rounded corner links
-
-
-  myDiagram.groupTemplate =
-    $(go.Group, "Vertical",
-      $(go.Panel, "Auto",
-        $(go.Shape, "RoundedRectangle",  // surrounds the Placeholder
-          {
-            parameter1: 14,
-            fill: "rgba(128,128,128,0.33)"
-          }),
-        $(go.Placeholder,    // represents the area of all member parts,
-          { padding: 5 })  // with some extra padding around them
-      ),
-      $(go.TextBlock,         // group title
-        { alignment: go.Spot.Right, font: "Bold 12pt Sans-Serif" },
-        new go.Binding("text", "key"))
-    );
 
   const templmap = new go.Map(); // In TypeScript you could write: new go.Map<string, go.Node>();
   templmap.add("npc", npcTemplate);
