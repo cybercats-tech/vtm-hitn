@@ -9,8 +9,9 @@ export const load = () => {
   
   return Promise.all([
     // parser.parse(spreadsheetId, 'CONFIG').then(data => ({ config: arrToObject(data) })),
-    parser.parse(spreadsheetId, 'NPCs').then(data => ({ npcs: data })),
-    parser.parse(spreadsheetId, 'PCs').then(data => ({ pcs: data })),
+    parser.parse(spreadsheetId, 'Organization').then(data => ({ organization: data.map(item => ({ ...item, category: 'organization' })) })),
+    parser.parse(spreadsheetId, 'NPCs').then(data => ({ npcs: data.map(item => ({ ...item, category: 'npc' })) })),
+    parser.parse(spreadsheetId, 'PCs').then(data => ({ pcs: data.map(item => ({ ...item, category: 'pc' })) })),
   ]).then(result => {
     const data = result.reduce(
       (acc, itemAsArr) => {
@@ -25,9 +26,11 @@ export const load = () => {
       {}
     )
 
-    console.log(data)
 
-    return data
+    const flatted = Object.values(data).flat()
+    console.log(flatted)
+
+    return flatted
   })
 }
 

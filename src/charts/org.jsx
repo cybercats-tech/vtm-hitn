@@ -1,5 +1,38 @@
 import * as go from "gojs";
 
+go.Shape.defineFigureGenerator("RoundedTopRectangle", (shape, w, h) => {
+  // this figure takes one parameter, the size of the corner
+  var p1 = 5;  // default corner size
+  if (shape !== null) {
+    var param1 = shape.parameter1;
+    if (!isNaN(param1) && param1 >= 0) p1 = param1;  // can't be negative or NaN
+  }
+  p1 = Math.min(p1, w / 2);
+  p1 = Math.min(p1, h / 2);  // limit by whole height or by half height?
+  var geo = new go.Geometry();
+  // a single figure consisting of straight lines and quarter-circle arcs
+  geo.add(new go.PathFigure(0, p1)
+    .add(new go.PathSegment(go.PathSegment.Arc, 180, 90, p1, p1, p1, p1))
+    .add(new go.PathSegment(go.PathSegment.Line, w - p1, 0))
+    .add(new go.PathSegment(go.PathSegment.Arc, 270, 90, w - p1, p1, p1, p1))
+    .add(new go.PathSegment(go.PathSegment.Line, w, h))
+    .add(new go.PathSegment(go.PathSegment.Line, 0, h).close()));
+  // don't intersect with two top corners when used in an "Auto" Panel
+  geo.spot1 = new go.Spot(0, 0, 0.3 * p1, 0.3 * p1);
+  geo.spot2 = new go.Spot(1, 1, -0.3 * p1, 0);
+  return geo;
+});
+
+const iconMap = new Map()
+iconMap.set('Brujah', 'https://vtm.paradoxwikis.com/images/thumb/8/87/Brujah_symbol.png/1024px-Brujah_symbol.png')
+iconMap.set('Gangrel', 'https://vtm.paradoxwikis.com/images/thumb/e/e4/Gangrel_symbol.png/240px-Gangrel_symbol.png')
+iconMap.set('Malkavian', 'https://vtm.paradoxwikis.com/images/thumb/1/1f/Malkavian_symbol.png/240px-Malkavian_symbol.png')
+iconMap.set('Nosferatu', 'https://vtm.paradoxwikis.com/images/thumb/6/61/Nosferatu_symbol.png/240px-Nosferatu_symbol.png')
+iconMap.set('Toreador', 'https://vtm.paradoxwikis.com/images/thumb/2/28/Toreador_symbol.png/240px-Toreador_symbol.png')
+iconMap.set('Tremere', 'https://vtm.paradoxwikis.com/images/thumb/e/ef/Tremere_symbol.png/240px-Tremere_symbol.png')
+iconMap.set('Ventrue', 'https://vtm.paradoxwikis.com/images/thumb/f/fa/Ventrue_symbol.png/240px-Ventrue_symbol.png')
+iconMap.set('Lasombra', 'https://vtm.paradoxwikis.com/images/thumb/0/0b/Lasombra_symbol.png/240px-Lasombra_symbol.png')
+
 export function init(data) {
   let myDiagram;
 
@@ -11,11 +44,11 @@ export function init(data) {
   // var mt8 = new go.Margin(8, 0, 0, 0);
   // var mr8 = new go.Margin(0, 8, 0, 0);
   // var ml8 = new go.Margin(0, 0, 0, 8);
-  var roundedRectangleParams = {
-    parameter1: 2, // set the rounded corner
-    spot1: go.Spot.TopLeft,
-    spot2: go.Spot.BottomRight, // make content go all the way to inside edges of rounded corners
-  };
+  // var roundedRectangleParams = {
+  //   parameter1: 10, // set the rounded corner
+  //   spot1: go.Spot.TopLeft,
+  //   spot2: go.Spot.BottomRight, // make content go all the way to inside edges of rounded corners
+  // };
 
   myDiagram = new go.Diagram(
     "diagram", // the DIV HTML element
@@ -31,7 +64,7 @@ export function init(data) {
       layout: $(
         go.TreeLayout, // use a TreeLayout to position all of the nodes
         {
-          isOngoing: false, // don't relayout when expanding/collapsing panels
+          // isOngoing: false, // don't relayout when expanding/collapsing panels
           treeStyle: go.TreeLayout.AlignmentStart,
           // properties for most of the tree:
           angle: 90,
@@ -51,159 +84,95 @@ export function init(data) {
     }
   );
 
-  myDiagram.toolManager.dragSelectingTool.isEnabled = false;
-
-  // This function provides a common style for most of the TextBlocks.
-  // Some of these values may be overridden in a particular TextBlock.
-  function textStyle(field) {
-    return [
-      {
-        font: "12px Roboto, sans-serif",
-        stroke: "rgba(0, 0, 0, .60)",
-        visible: false, // only show textblocks when there is corresponding data for them
-      },
-      new go.Binding("visible", field, (val) => val !== undefined),
-    ];
-  }
-
-  // define Converters to be used for Bindings
-  // function theNationFlagConverter(nation) {
-  //   return "https://www.gamespew.com/wp-content/uploads/2023/03/bloodhunt-tremere-update-1.jpg";
-    
-  // }
-
   // define the Node template
-  myDiagram.nodeTemplate = $(
+  const npcTemplate = $(
     go.Node,
-    "Auto",
-    {
-      locationSpot: go.Spot.Top,
-      isShadowed: true,
-      shadowBlur: 1,
-      shadowOffset: new go.Point(0, 1),
-      shadowColor: "rgba(0, 0, 0, .14)",
-      // selection adornment to match shape of nodes
-      selectionAdornmentTemplate: $(
-        go.Adornment,
-        "Auto",
-        $(go.Shape, "RoundedRectangle", roundedRectangleParams, {
-          fill: null,
-          stroke: "#7986cb",
-          strokeWidth: 3,
-        }),
-        $(go.Placeholder)
-      ), // end Adornment
-    },
-    $(
-      go.Shape,
-      "RoundedRectangle",
-      roundedRectangleParams,
-      { name: "SHAPE", fill: "#ffffff", strokeWidth: 0 },
-      // gold if highlighted, white otherwise
-      // new go.Binding("fill", "isHighlighted", (h) => {
-      //   console.log(h)
-      //   return h ? "gold" : "red";
-      // }).ofObject()
-      // new go.Binding("text", "boss", boss => {
-      //   var boss = myDiagram.model.findNodeDataForKey(boss);
-      //   if (boss !== null) {
-      //     return "Reporting to: " + boss.name;
-      //   }
-      //   return "";
-      // })
-      // )
-      // new go.Binding("fill", "boss", boss => {
-      //   console.log(boss)
-      //   var boss = myDiagram.model.findNodeDataForKey(boss);
-      //   console.log(boss)
-      //   if (boss !== null) {
-      //     return "green";
-      //   }
-      //   return "blue";
-      // })
-    ),
-    $(
-      go.Panel,
-      "Vertical",
-      $(
-        go.Panel,
-        "Horizontal",
-        { margin: 2 },
-        // $(
-        //   go.Picture, // flag image, only visible if a nation is specified
-        //   { margin: mr8, visible: false, desiredSize: new go.Size(150, 150) },
-        //   new go.Binding("source", "nation", theNationFlagConverter),
-        //   new go.Binding("visible", "nation", (nat) => nat !== undefined)
-        // ),
-        $(
-          go.Panel,
-          "Table",
-          $(
-            go.TextBlock,
-            {
-              row: 0,
-              alignment: go.Spot.Left,
-              font: "16px Roboto, sans-serif",
-              stroke: "rgba(0, 0, 0, .87)",
-              maxSize: new go.Size(160, NaN),
-            },
-            new go.Binding("text", "name")
-          ),
-          $(
-            go.TextBlock,
-            textStyle("title"),
-            {
-              row: 1,
-              alignment: go.Spot.Left,
-              maxSize: new go.Size(160, NaN),
-            },
-            new go.Binding("text", "title")
-          )
-          // $("PanelExpanderButton", "INFO", {
-          //   row: 0,
-          //   column: 1,
-          //   rowSpan: 2,
-          //   margin: ml8,
-          // })
-        )
-      ),
-      // $(
-      //   go.Shape,
-      //   "LineH",
-      //   {
-      //     stroke: "rgba(0, 0, 0, .60)",
-      //     strokeWidth: 1,
-      //     height: 1,
-      //     stretch: go.GraphObject.Horizontal,
-      //   },
-      //   new go.Binding("visible").ofObject("INFO") // only visible when info is expanded
-      // ),
-      $(
-        go.Panel,
-        "Vertical",
+    "Vertical",
+    $(go.Panel, "Position",
+      { background: "transparent" },
+      $(go.Shape, "RoundedTopRectangle", { parameter1: 50, width: 320, height: 360, fill: '#9b9c97' }),
+      $(go.Picture,
         {
-          name: "INFO", // identify to the PanelExpanderButton
-          stretch: go.GraphObject.Horizontal, // take up whole available width
-          margin: 8,
-          defaultAlignment: go.Spot.Left, // thus no need to specify alignment on each element
+          position: new go.Point(150, 10),
+          width: 40, height: 40
         },
-        $(
-          go.TextBlock,
-          textStyle("status"),
-          new go.Binding("text", "status", (head) => "status: " + head)
-        )
-        // $(go.TextBlock, textStyle("boss"),
-        // new go.Binding("margin", "headOf", head => mt8), // some space above if there is also a headOf value
-        // new go.Binding("text", "boss", boss => {
-        //   var boss = myDiagram.model.findNodeDataForKey(boss);
-        //   if (boss !== null) {
-        //     return "Reporting to: " + boss.name;
-        //   }
-        //   return "";
-        // })
-        // )
+        new go.Binding("source", 'clan', clan => iconMap.get(clan)),
+        new go.Binding("visible", 'clan', clan => iconMap.has(clan)),
+      ),
+      $(go.TextBlock,
+        {
+          position: new go.Point(0, 60), 
+          font: "Bold 24pt Cormorant Garamond", width: 320, textAlign: 'center' 
+        },
+        new go.Binding("text", "name")
+      ),
+      $(go.Picture,
+        {
+          position: new go.Point(55, 110),
+          width: 220, height: 200
+        },
+        new go.Binding("source", "portrait"),
+        new go.Binding("visible", 'portrait', (val) => val !== undefined),
+      ),
+      $(go.TextBlock,
+        {
+          position: new go.Point(0, 320), 
+          font: "Bold 18pt Cormorant Garamond", width: 320, textAlign: 'center' 
+        },
+        new go.Binding("text", "status")
+      ),
+    ),
+  );
+
+  const pcTemplate = $(
+    go.Node,
+    "Vertical",
+    $(go.Panel, "Position",
+      { background: "transparent" },
+      $(go.Shape, "RoundedTopRectangle", { parameter1: 50, width: 320, height: 360, fill: '#9b9c97' }),
+      $(go.Picture,
+        {
+          position: new go.Point(150, 10),
+          width: 40, height: 40
+        },
+        new go.Binding("source", 'clan', clan => iconMap.get(clan)),
+        new go.Binding("visible", 'clan', clan => iconMap.has(clan)),
+      ),
+      $(go.TextBlock,
+        {
+          position: new go.Point(0, 60), 
+          font: "Bold 24pt Cormorant Garamond", width: 320, textAlign: 'center' 
+        },
+        new go.Binding("text", "name")
+      ),
+      $(go.Picture,
+        {
+          position: new go.Point(55, 110),
+          width: 220, height: 200,
+          click: function(e, obj) {
+            console.log(obj.part.data);
+            const link = obj.part.data.telegram
+
+            if(link && window.open) window.open(link, '_blank')
+          }
+        },
+        new go.Binding("source", "portrait"),
+        new go.Binding("visible", 'portrait', (val) => val !== undefined),
+      ),
+      $(go.TextBlock,
+        {
+          position: new go.Point(0, 320), 
+          font: "Bold 18pt Cormorant Garamond", width: 320, textAlign: 'center' 
+        },
+        new go.Binding("text", "status")
       )
-    )
+    ),
+  );
+
+  const organizationNodeTemplate = $(go.Node, "Auto",
+    $(go.Picture,
+      { margin: 5, width: 320, height: 180 },
+      new go.Binding("source", "image"))
   );
 
   // define the Link template, a simple orthogonal line
@@ -214,10 +183,34 @@ export function init(data) {
     $(go.Shape, { strokeWidth: 3, stroke: "#424242" })
   ); // dark gray, rounded corner links
 
+
+  myDiagram.groupTemplate =
+    $(go.Group, "Vertical",
+      $(go.Panel, "Auto",
+        $(go.Shape, "RoundedRectangle",  // surrounds the Placeholder
+          {
+            parameter1: 14,
+            fill: "rgba(128,128,128,0.33)"
+          }),
+        $(go.Placeholder,    // represents the area of all member parts,
+          { padding: 5 })  // with some extra padding around them
+      ),
+      $(go.TextBlock,         // group title
+        { alignment: go.Spot.Right, font: "Bold 12pt Sans-Serif" },
+        new go.Binding("text", "key"))
+    );
+
+  const templmap = new go.Map(); // In TypeScript you could write: new go.Map<string, go.Node>();
+  templmap.add("npc", npcTemplate);
+  templmap.add("pc", pcTemplate);
+  templmap.add("organization", organizationNodeTemplate);
+
+  myDiagram.nodeTemplateMap = templmap;
+
+
   // create the Model with data for the tree, and assign to the Diagram
   myDiagram.model = new go.TreeModel({
-    nodeParentKeyProperty: "parent", // this property refers to the parent node data
-    nodeDataArray: data.npcs,
+    nodeDataArray: data,
   });
 
   // Overview
